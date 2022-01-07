@@ -1,0 +1,70 @@
+#!/bin/bash
+# All commands needed to set up Flask/SQL/REST/React application.
+# Assumes files are already created.
+#
+# Directory should look like this to begin:
+#   .gitignore (optional)
+#   requirements.txt
+#   setup.py
+#   package.json
+#   webpack.config.js
+#   sql/
+#       schema.sql
+#       data.sql
+#       uploads/
+#           (image).jpg
+#   var/
+#   app/
+#       __init__.py
+#       config.py
+#       model.py
+#       passwords.py (optional)
+#       static/
+#           css/
+#               style.css (optional)
+#       templates/
+#           index.html
+#       views/
+#           __init__.py
+#           index.py
+#           uploads.py (optional)
+#       api/
+#           __init__.py
+#           index.py
+#       js/
+#           main.jsx
+
+# Stop on errors
+set -Eeuo pipefail
+
+# Create virtual environment
+python3 -m venv env
+
+# Activate virtual environment
+source env/bin/activate
+
+# Upgrade Python tools in virtual environment
+pip install --upgrade pip setuptools wheel
+
+# Install HTML5 Validator
+pip install html5validator
+
+# Install utilities
+brew install sqlite3 curl httpie coreutils node
+
+# Install back end
+pip install -r requirements.txt
+pip install -e .
+
+# Install front end
+if [ -f "package-lock.json" ]; then
+    npm ci .
+else
+    npm install .
+fi
+
+# Install the latest chromedriver
+npm install chromedriver --detect_chromedriver_version --no-save
+
+# Build
+npx webpack

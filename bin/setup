@@ -1,0 +1,250 @@
+#!/bin/bash
+
+ARGS=$(getopt -a --options n:v:p --long "name:,version:,passwords" -- "$@")
+NAME_PROPER=""
+NAME=""
+NAME_UPPERCASE=""
+VERSION='0.1.0'
+USING_PASSWORDS="false"
+DEFAULTS_DIR='/Users/tdscheper/Documents/Code/Resources/Sandbox'
+DEFAULT_GITIGNORE_FILE="${DEFAULTS_DIR}/def-gitignore.txt"
+DEFAULT_REQS_FILE="${DEFAULTS_DIR}/def-requirements.txt"
+DEFAULT_SETUP_FILE="${DEFAULTS_DIR}/def-setup.py"
+DEFAULT_PACKAGE_FILE="${DEFAULTS_DIR}/def-package.json"
+DEFAULT_WEBPACK_CONFIG_FILE="${DEFAULTS_DIR}/def-webpack.config.js"
+DEFAULT_APP_DIR="${DEFAULTS_DIR}/app"
+DEFAULT_APP_INIT_FILE="${DEFAULT_APP_DIR}/def-init.py"
+DEFAULT_APP_MODEL_FILE="${DEFAULT_APP_DIR}/def-model.py"
+DEFAULT_APP_PASSWORDS_FILE="${DEFAULT_APP_DIR}/def-passwords.py"
+DEFAULT_APP_INDEX_TEMPLATE_FILE="${DEFAULT_APP_DIR}/templates/def-index.html"
+DEFAULT_APP_VIEWS_DIR="${DEFAULT_APP_DIR}/views"
+DEFAULT_APP_VIEWS_INIT_FILE="${DEFAULT_APP_VIEWS_DIR}/def-init.py"
+DEFAULT_APP_VIEWS_INDEX_FILE="${DEFAULT_APP_VIEWS_DIR}/def-index.py"
+DEFAULT_APP_API_DIR="${DEFAULT_APP_DIR}/api"
+DEFAULT_APP_API_INIT_FILE="${DEFAULT_APP_API_DIR}/def-init.py"
+DEFAULT_APP_API_INDEX_FILE="${DEFAULT_APP_API_DIR}/def-index.py"
+DEFAULT_APP_JS_MAIN_FILE="${DEFAULT_APP_DIR}/js/def-main.jsx"
+
+Usage () {
+    echo "Options:"
+    echo -e "\t[-n|--name <name>] | Application name | Required"
+    echo -e "\t[-v|--version <version>] | Application version | Optional"
+    echo -e "\t[-p|--passwords] | Flag indicating password operations will be needed | Optional"
+}
+
+# Args: All args sent to script
+GrabOptions () {
+    # Gather options
+    eval set -- "$ARGS"
+    while true; do
+        case "$1" in
+            -n|--name)
+                NAME_PROPER="$2"
+                NAME=$(echo $NAME_PROPER | tr A-Z a-z)
+                NAME_UPPERCASE=$(echo $NAME_PROPER | tr a-z A-Z)
+                shift 2;;
+            -v|--version)
+                VERSION="$2"
+                shift 2;;
+            -p|--passwords)
+                USING_PASSWORDS="true"
+                shift;;
+            --)
+                break;;
+            *)
+                Usage
+                exit 1;;
+        esac
+    done
+
+    # If name option was not given, error
+    if [ -z $NAME_PROPER ]; then
+        Usage
+        exit 1
+    fi
+}
+
+# Args:
+#  1. Path to file
+FixNameProper () {
+    sed -i -e "s/FIXME_NAME_PROPER/${NAME_PROPER}/g" $1
+}
+
+# Args:
+#  1. Path to file
+FixName () {
+    sed -i -e "s/FIXME_NAME/${NAME}/g" $1
+}
+
+# Args:
+#  1. Path to file
+FixNameUpper () {
+    sed -i -e "s/FIXME_NAME_UPPERCASE/${NAME_UPPERCASE}/g" $1
+}
+
+# Args:
+#  1. Path to file
+FixVersion () {
+    sed -i -e "s/FIXME_VERSION/${VERSION}/g" $1
+}
+
+FixSetup () {
+    path="setup.py"
+    FixNameProper $path
+    FixName $path
+    FixVersion $path
+}
+
+FixPackage () {
+    path="package.json"
+    FixName $path
+    FixVersion $path
+}
+
+FixWebpackConfig () {
+    path="webpack.config.js"
+    FixName $path
+}
+
+FixAppInit () {
+    path="${NAME}/__init__.py"
+    FixNameProper $path
+    FixNameUpper $path
+    FixName $path
+}
+
+FixAppModel () {
+    path="${NAME}/model.py"
+    FixNameProper $path
+    FixName $path
+}
+
+FixAppPasswords () {
+    path="${NAME}/passwords.py"
+    FixNameProper $path
+}
+
+FixAppIndexTemplate () {
+    path="${NAME}/templates/index.html"
+    FixNameProper $path
+}
+
+FixAppViewsInit () {
+    path="${NAME}/views/__init__.py"
+    FixNameProper $path
+    FixName $path
+}
+
+FixAppViewsIndex () {
+    path="${NAME}/views/index.py"
+    FixNameProper $path
+    FixName $path
+}
+
+FixAppApiInit () {
+    path="${NAME}/api/__init__.py"
+    FixNameProper $path
+    FixName $path
+}
+
+FixAppApiIndex () {
+    path="${NAME}/api/index.py"
+    FixNameProper $path
+    FixName $path
+}
+
+Main () {
+    # Gather command line options
+    GrabOptions "$@"
+
+    # .gitignore
+    cp $DEFAULT_GITIGNORE_FILE .gitignore
+
+    # requirements.txt
+    cp $DEFAULT_REQS_FILE requirements.txt
+
+    # setup.py
+    cp $DEFAULT_SETUP_FILE setup.py
+    FixSetup
+
+    # package.json
+    cp $DEFAULT_PACKAGE_FILE package.json
+    FixPackage
+
+    # webpack.config.js
+    cp $DEFAULT_WEBPACK_CONFIG_FILE webpack.config.js
+    FixWebpackConfig
+
+    # sql/
+    mkdir sql
+    touch sql/schema.sql
+    touch sql/data.sql
+    mkdir sql/uploads
+
+    # var/
+    mkdir var
+
+    # app/
+    mkdir $NAME
+
+    # app/__init__.py
+    cp $DEFAULT_APP_INIT_FILE ${NAME}/__init__.py
+    FixAppInit
+
+    # app/config.py
+    touch ${NAME}/config.py
+
+    # app/model.py
+    cp $DEFAULT_APP_MODEL_FILE ${NAME}/model.py
+    FixAppModel
+
+    # app/passwords.py
+    if [ $USING_PASSWORDS == "true" ]; then
+        cp $DEFAULT_APP_PASSWORDS_FILE ${NAME}/passwords.py
+        FixAppPasswords
+    fi
+
+    # app/static/
+    mkdir ${NAME}/static
+
+    # app/static/css
+    mkdir ${NAME}/static/css
+    touch ${NAME}/static/css/style.css
+    
+    # app/templates/
+    mkdir ${NAME}/templates
+    cp $DEFAULT_APP_INDEX_TEMPLATE_FILE ${NAME}/templates/index.html
+    FixAppIndexTemplate
+    
+    # app/views/
+    mkdir ${NAME}/views
+    cp $DEFAULT_APP_VIEWS_INIT_FILE ${NAME}/views/__init__.py
+    FixAppViewsInit
+    cp $DEFAULT_APP_VIEWS_INDEX_FILE ${NAME}/views/index.py
+    FixAppViewsIndex
+    
+    # app/api/
+    mkdir ${NAME}/api
+    cp $DEFAULT_APP_API_INIT_FILE ${NAME}/api/__init__.py
+    FixAppApiInit
+    cp $DEFAULT_APP_API_INDEX_FILE ${NAME}/api/index.py
+    FixAppApiIndex
+    
+    # app/js/
+    mkdir ${NAME}/js
+    cp $DEFAULT_APP_JS_MAIN_FILE ${NAME}/js/main.jsx
+
+    # Remove junk files
+    rm -f ${NAME}/api/__init__.py-e
+    rm -f ${NAME}/api/index.py-e
+    rm -f ${NAME}/templates/index.html-e
+    rm -f ${NAME}/views/__init__.py-e
+    rm -f ${NAME}/views/index.py-e
+    rm -f ${NAME}/__init__.py-e
+    rm -f ${NAME}/model.py-e
+    rm -f package.json-e
+    rm -f setup.py-e
+    rm -f webpack.config.js-e
+}
+
+Main "$@"

@@ -1,0 +1,60 @@
+#!/bin/bash
+
+Usage () {
+    echo "Usage: $0 (create|destroy|reset|dump)"
+}
+
+# Args:
+#  1. Name of table
+PrintTable () {
+    echo "$1"
+    sqlite3 -batch -line var/spanishdictapi.sqlite3 "SELECT * FROM $1"
+    echo
+}
+
+Create () {
+    if [ -f "var/spanishdictapi.sqlite3" ]
+    then
+        echo "Error: Database already exists"
+        exit 1
+    fi
+
+    sqlite3 var/spanishdictapi.sqlite3 < sql/schema.sql
+    sqlite3 var/spanishdictapi.sqlite3 < sql/data.sql
+}
+
+Destroy () {
+    rm -rf var/spanishdictapi.sqlite3
+}
+
+Reset () {
+    Destroy
+    Create
+}
+
+Dump () {
+    PrintTable verbs
+}
+
+Main () {
+    case $1 in
+        "create")
+            Create
+            ;;
+        "destroy")
+            Destroy
+            ;;
+        "reset")
+            Reset
+            ;;
+        "dump")
+            Dump
+            ;;
+        *)
+            Usage
+            exit 1
+            ;;
+    esac
+}
+
+Main "$@"

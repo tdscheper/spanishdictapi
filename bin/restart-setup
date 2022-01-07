@@ -1,0 +1,17 @@
+#!/bin/bash
+
+DIR_NAME="SpanishDictAPI"
+APP_NAME="SpanishDictAPI"
+
+rm -f bin/setup
+mkdir ../tmp
+mv bin ../tmp/bin
+cd ..
+rm -rf $DIR_NAME
+mkdir $DIR_NAME
+mv tmp/bin ${DIR_NAME}/bin
+rm -rf tmp
+cd $DIR_NAME
+cp /Users/tdscheper/Documents/Code/Resources/Sandbox/bin/def-setup bin/setup
+chmod +x bin/setup
+./bin/setup -n $APP_NAME
